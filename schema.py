@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Annotated, TypedDict, Tuple
+from typing import List, Dict, Optional, Annotated, TypedDict, Tuple, Any
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -40,7 +40,7 @@ class State(TypedDict, total=False):
     # SQL side
     sql_query: str
     safe_sql_query: str
-
+    execution: bool
     # Error handling
     error: str
     error_source: str
@@ -52,3 +52,8 @@ class State(TypedDict, total=False):
     # LLM side
     llm_output: RefinerOutput
     human_choice: int
+    
+    data: List[Any]
+    final_response: str
+    
+    retry_count: int

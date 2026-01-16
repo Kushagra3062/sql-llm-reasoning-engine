@@ -1,4 +1,5 @@
 import re
+from schema import State
 
 def is_safe_sql(sql):
     sql_lower = sql.lower()
@@ -31,6 +32,9 @@ def table_exist(state:State): # has to pass the state as well
     
     tables = state["tables"]
     schema = state["schema"]
+    
+    if not tables:
+        return [True, None]
     for table in tables:
         if table not in schema:
             return [False,table]
@@ -63,20 +67,20 @@ def safety_check(state:State):
         #GO BACK TO GENRATOR AGAIN
         state['error'] = "Unsafe SQL: DDL/DML detected"
         return state
-    bg,tb = table_exist()
+    bg,tb = table_exist(state)
     if not bg:
         #GO BACK TO GENRATOR AGAIN
         state['error'] = f"{tb} Table does not exists"
         return state
-    bg,cl = col_exist()
-    if not bg:
-        #GO BACK TO GENRATOR AGAIN
-        state['error'] = f"{cl} column does not exists"
     
     if not has_proper_limit(sql_query):
         state['sql_query'] = enforce_safety_limits(sql_query)
     
-    return state
+    return {
+        'ready' : True,
+        'safe_sql_query': state['sql_query'],
+        "error": ""
+    } 
     
     
     
