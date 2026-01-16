@@ -11,4 +11,10 @@ dependencies = [
     "langchain",
     "google-generativeai",
     "langgraph",
+    "pip>=25.3",
+    "langchain-community>=0.4.1",
+    "pydantic>=2.12.5",
+    "psycopg2>=2.9.11",
+    "langchain-groq>=1.1.1",
+    "dotenv>=0.9.9",
 ]
