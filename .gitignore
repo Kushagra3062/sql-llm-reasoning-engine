@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Remote ignores (Python)
+.env
+.venv/
+__pycache__/
