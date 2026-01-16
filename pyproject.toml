@@ -1,0 +1,14 @@
+[project]
+name = "sql-llm-agent"
+version = "0.1.0"
+description = "Natural language to SQL reasoning agent on Chinook DB"
+requires-python = ">=3.10"
+
+dependencies = [
+    "sqlalchemy",
+    "pymysql",
+    "python-dotenv",
+    "langchain",
+    "google-generativeai",
+    "langgraph",
+]
