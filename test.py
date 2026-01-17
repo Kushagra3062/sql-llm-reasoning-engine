@@ -1,12 +1,7 @@
-"""
-Smart Ambiguity Agent - COMPREHENSIVE TEST SUITE
-Tests all 3 decision paths: MCQ → ASSUME → READY
-"""
 
 from agents.dsds import smart_refine
 import json
 
-# ========== REAL CHINOOK SCHEMA (Your friend's format) ==========
 CHINOOK_SCHEMA = {
     "Customer": {
         "columns": [
@@ -47,7 +42,6 @@ CHINOOK_SCHEMA = {
     }
 }
 
-# ========== REALISTIC SAMPLE DATA (Temporal Intelligence) ==========
 SAMPLE_DATA = {
     "Invoice": [
         {"invoice_date": "2025-01-10T10:30:00", "total": 9.99},
@@ -58,7 +52,6 @@ SAMPLE_DATA = {
     ]
 }
 
-# ========== TEST SUITE - 15 QUERIES (3 LEVELS) ==========
 TEST_SUITES = {
     "LEVEL 1 - BASIC INTENT UNCLEAR (MCQ)": [
         "Show me some performance metrics",
@@ -115,7 +108,7 @@ def run_comprehensive_test():
             try:
                 result = smart_refine(query, CHINOOK_SCHEMA, SAMPLE_DATA)
                 
-                # Track stats
+
                 decision = result.get('llm_output', {}).get('decision', 'unknown')
                 confidence = result.get('llm_output', {}).get('confidence', 0)
                 
@@ -128,7 +121,7 @@ def run_comprehensive_test():
                 
                 results_summary["confidence_avg"].append(confidence)
                 
-                # Expected behavior check
+
                 if "BASIC INTENT" in test_type and decision != "generate_mcqs":
                     print("EXPECTED: MCQs, GOT:", decision)
                 elif "RANKING" in test_type and decision != "safe_assumptions":
@@ -143,7 +136,7 @@ def run_comprehensive_test():
         
         print()
     
-    # Final summary
+    
     print("="*100)
     print("TEST SUMMARY")
     print("="*100)
@@ -164,11 +157,10 @@ def test_hitl_workflow():
     print("\nHITL WORKFLOW TEST")
     print("="*50)
     
-    # Test 1: Generate MCQs
+    
     print("\n1. FIRST RUN - Should generate MCQs")
     result1 = smart_refine("Show me performance metrics", CHINOOK_SCHEMA, SAMPLE_DATA)
     
-    # Test 2: Human selects option 2
     print("\n2. SECOND RUN - Human selects [2]")
     result2 = smart_refine("Show me performance metrics", CHINOOK_SCHEMA, SAMPLE_DATA, human_mcqs=2)
     
@@ -187,7 +179,6 @@ def test_temporal_intelligence():
     else:
         print("No temporal snippet generated")
 
-# ========== RUN ALL TESTS ==========
 if __name__ == "__main__":
     print("Starting Smart Ambiguity Agent Tests...\n")
     

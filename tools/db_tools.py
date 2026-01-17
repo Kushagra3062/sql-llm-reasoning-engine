@@ -55,7 +55,6 @@ def fetch_invoice_sample():
 
     rows = db.run(query)
 
-    # If rows is a string, split lines
     if isinstance(rows, str):
         lines = rows.strip().split("\n")
         data = []
@@ -68,7 +67,6 @@ def fetch_invoice_sample():
                 })
         return data
 
-    # If rows is list of tuples
     result = []
     for row in rows:
         if isinstance(row, (list, tuple)) and len(row) >= 2:

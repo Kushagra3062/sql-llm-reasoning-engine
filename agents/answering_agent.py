@@ -3,10 +3,9 @@ from schema import State
 
 def answer_generator(state: State):
     llm = get_llm()
-    # Get raw data (likely list of tuples)
+
     data = state.get("data", [])
     
-    # --- 1. SIMPLE TRUNCATION (8k tokens ~ 32k characters) ---
     raw_data_str = str(data)
     limit = 8000 * 4 
     
@@ -15,7 +14,6 @@ def answer_generator(state: State):
     else:
         truncated_data = raw_data_str
 
-    # --- 2. NO-NONSENSE PROMPT ---
     prompt = f"""
     You are a Senior Data Analyst. 
     The user asked: {state['user_query']}
@@ -41,7 +39,6 @@ def answer_generator(state: State):
     Interpret the results based on the SQL logic used.
     """
 
-    # --- 3. EXECUTE ---
     ai_response = llm.invoke(prompt).content
 
     return {

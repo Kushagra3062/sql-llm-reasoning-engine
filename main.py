@@ -15,42 +15,37 @@ load_dotenv()
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANG_SMITH")
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = "SQL_Ambiguity_Detector"
-# Placeholder for your SQL Generator Agent
+
 def sql_generator_node(state: State):
     print("\n[MAIN] Node: SQL Generation")
-    # Here you would take state['intent_summary'] and state['tables'] 
-    # and use a prompt to generate the actual PostgreSQL code.
+    
     return {"sql_query": "SELECT ..."}
 
 def call_planner_subgraph(state: State):
-    """
-    Bridge between the Main State and the Planner Subgraph.
-    """
+    
     print("\n[MAIN] Node: Planning SQL Structure")
     
     retries = state.get("retry_count",0)
-    # 1. Prepare input for the planner subgraph
-    # We use the 'intent_summary' from the refiner as the question
+   
     question = state.get("intent_summary") or state["user_query"]
     if retries > 0:
         question += f" (IMPORTANT: Your previous plan returned 0 rows. Please check table joins and filter case-sensitivity.)"
     planner_input = {
         "question": question,
-        "schema": state["schema"], # Pass the full schema
-        "relevant_tables": state.get("tables", []) # Use tables picked by Refiner
+        "schema": state["schema"], 
+        "relevant_tables": state.get("tables", []) 
     }
 
-    # 2. Invoke the compiled planner graph
-    # Import 'planner_graph' from your planner_agent.py
+    
     planner_result = planner_graph.invoke(planner_input)
 
-    # 3. Return the plan back to the main state
+    
     generated_plane = planner_result["plan"]
     return {
         "plan": generated_plane,
         "tables": generated_plane.get("tables", []),
         "retry_count": retries+1,
-        "messages": [f"📝 Plan generated with {len(planner_result['plan'].get('joins', []))} joins."]
+        "messages": [f"Plan generated with {len(planner_result['plan'].get('joins', []))} joins."]
     }
     
 from agents.dsds import (
@@ -60,9 +55,7 @@ from agents.dsds import (
     route_ambiguity_decision
 )
 
-# ... (other imports)
 
-# Graph Definition
 graph_b = StateGraph(State)
 
 graph_b.add_node("explore", exp_agent)
@@ -75,7 +68,7 @@ graph_b.add_node("safety", safety_check)
 graph_b.add_node("execute", execute_query)
 graph_b.add_node("answer", answer_generator)
 
-# Edges
+
 graph_b.add_edge(START, "explore")
 graph_b.add_edge("explore", "detect")
 
@@ -102,14 +95,14 @@ def route_after_safety(state: State):
 def route_after_execution(state: State):
     retries = state.get('retry_count', 0)
     if state.get("error") and not state.get("execution"):
-        print(f"❌ [EXECUTION] DB Error: {state['error']}. Retrying Generator...")
+        print(f"[EXECUTION] DB Error: {state['error']}. Retrying Generator...")
         return "generate_sql"
     if not state.get('data') or len(state['data']) == 0:
         if retries < 4:
-            print(f"⚠️ [EMPTY DATA] Attempt {retries + 1}/3. Re-routing to Planner...")
+            print(f"[EMPTY DATA] Attempt {retries + 1}/3. Re-routing to Planner...")
             return "planner"
         else:
-            print("🚫 [EMPTY DATA] Max retries reached. Proceeding to answer with empty state.")
+            print("[EMPTY DATA] Max retries reached. Proceeding to answer with empty state.")
             return "answer"
     return "answer"
 
@@ -119,7 +112,7 @@ graph_b.add_edge("answer", END)
 
 graph = graph_b.compile(checkpointer=MemorySaver(), interrupt_before=["human_resolve"])
 
-# --- API SETUP ---
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -127,7 +120,7 @@ import uvicorn
 
 app = FastAPI()
 
-# Allow CORS for frontend (default Vite port is 5173)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -144,7 +137,7 @@ class QueryRequest(BaseModel):
 @app.post("/query")
 async def run_query(request: QueryRequest):
     try:
-        # Manage Thread ID
+        
         import uuid
         thread_id = request.thread_id
         if not thread_id or thread_id == "1":
@@ -153,7 +146,7 @@ async def run_query(request: QueryRequest):
 
         config = {"configurable": {"thread_id": thread_id}}
         
-        # Determine if we are resuming or starting new
+        
         if request.human_choice is not None:
              print(f"Resuming session {thread_id} with choice: {request.human_choice}")
              graph.update_state(config, {"human_choice": request.human_choice})
@@ -171,7 +164,7 @@ async def run_query(request: QueryRequest):
             }
              final_state = graph.invoke(initial_state, config)
 
-        # Check if paused (HITL)
+        
         snapshot = graph.get_state(config)
         is_interrupted = bool(snapshot.next)
         
@@ -188,7 +181,7 @@ async def run_query(request: QueryRequest):
                  mcq_options = llm_out.get('mcq_options', [])
                  decision = llm_out.get('decision', 'UNKNOWN')
                  
-        # FORCE override decision if we are at 'human_resolve' (Verified by snapshot)
+        
         if is_interrupted and tuple(snapshot.next) == ('human_resolve',):
              decision = "generate_mcqs"
 
@@ -202,18 +195,18 @@ async def run_query(request: QueryRequest):
                 "thread_id": thread_id
             }
 
-        # Format response
+        
         state_to_use = final_state if final_state else snapshot.values
         raw_data = state_to_use.get('data')
         formatted_data = {"columns": [], "rows": []}
         if raw_data and isinstance(raw_data, list) and len(raw_data) > 0:
              formatted_data["rows"] = raw_data
 
-        # Format Plan
+        
         plan_raw = state_to_use.get('plan')
         formatted_plan = "Plan: Not available"
         if isinstance(plan_raw, dict):
-             # Build a clean Markdown representation without ** bolding as requested
+             
              formatted_plan = "<h3>SQL Plan Generation</h3>\n\n"
              
              formatted_plan += "#### Explanation\n"
@@ -260,7 +253,7 @@ async def run_query(request: QueryRequest):
         if "Rate limit" in error_msg or "429" in error_msg:
              return {
                 "role": "system",
-                "content": "⚠️ **API Rate Limit Reached**\n\nYou have exceeded the daily token limit for the Groq API. Please wait a few minutes or upgrade your plan.\n\nDetails: " + error_msg,
+                "content": "API Rate Limit Reached\n\nYou have exceeded the daily token limit for the Groq API. Please wait a few minutes or upgrade your plan.\n\nDetails: " + error_msg,
                 "reasoning": [],
                 "sql": None,
                 "data": None

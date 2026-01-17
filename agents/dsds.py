@@ -11,10 +11,8 @@ from utilis.get_llm import get_llm
 
 llm = get_llm()
 
-# ========== OUTPUT PARSER ==========
 parser = PydanticOutputParser(pydantic_object=RefinerOutput)
 
-# ========== PROMPTS ==========
 DETECTION_PROMPT = ChatPromptTemplate.from_template("""
 
 You are a High-Precision Ambiguity Detector for a SQL Database. 
@@ -67,11 +65,10 @@ detect_chain = DETECTION_PROMPT | llm | parser
 mcq_chain = MCQ_PROMPT | llm | parser
 
 
-# Fix: Robust Schema Compression
 def compress_schema(schema: Dict, max_cols_per_table: int = 6):
     compressed = {}
     for table, col_data in schema.items():
-        # Handle stringified lists from Postgres/Explorer
+        
         if isinstance(col_data, str):
             try:
                 cols = ast.literal_eval(col_data)
@@ -99,10 +96,10 @@ def detect_critical_ambiguity(state: State):
         "format_instructions": parser.get_format_instructions()
     })
 
-    # Update state with LLM insights
+  
     return {
         "llm_output": result,
-        "messages": [f"🎯 Detected: {result.decision.value}"]
+        "messages": [f"Detected: {result.decision.value}"]
     }
 
 def handle_human_mcqs(state: State):
@@ -125,7 +122,7 @@ def handle_human_mcqs(state: State):
     }
 
 def create_smart_refiner(State_Schema):
-    # This is kept for compatibility but main.py defines the graph
+   
     graph = StateGraph(State_Schema)
     graph.add_node("detect", detect_critical_ambiguity)
     graph.add_node("human_resolve", handle_human_mcqs)
@@ -139,16 +136,15 @@ def route_ambiguity_decision(state: State):
     if decision == AgentDecision.MCQ_NEEDED:
         return "human_resolve"
     
-    # If ASSUME_SAFE, we must sync the output to the state keys here
+    
     return "sync_and_end"
 
-# Fix: Explicit Sync Node to bridge subgraph to parent
+
 def auto_resolve_safe_ambiguity(state: State):
     print("[REFINER] Syncing intent to main graph...")
-    # Logic: if we are here, decision was ASSUME_SAFE
-    # Check if llm_output exists
+    
     if not state.get("llm_output"):
-         return {"ready": True, "intent_summary": state.get("user_query")} # Fallback
+         return {"ready": True, "intent_summary": state.get("user_query")} 
          
     out = state["llm_output"]
     return {

@@ -8,9 +8,8 @@ def print_step(msg):
     print(f"\n{'='*20}\n{msg}\n{'='*20}")
 
 try:
-    # 1. Send Ambiguous Query
     print_step("Step 1: Sending ambiguous query ('Show me top artists')")
-    payload = {"query": "Show me top artists"} # 'top' triggers ambiguity in dsds.py
+    payload = {"query": "Show me top artists"} 
     response = requests.post(url, json=payload)
     
     data = response.json()
@@ -18,10 +17,10 @@ try:
     print("Content:", data.get('content'))
     
     if data.get('type') == 'interruption':
-        print("✅ Correctly paused for ambiguity.")
+        print("Correctly paused for ambiguity.")
         print("Options:", json.dumps(data.get('mcq_options'), indent=2))
         
-        # 2. Resume with Choice
+    
         print_step("Step 2: Resuming with choice 1")
         resume_payload = {
             "query": "Show me top artists",
@@ -34,12 +33,12 @@ try:
         print("Final Content:", data_2.get('content'))
         
         if data_2.get('sql'):
-            print("✅ SQL Generated:", data_2['sql'])
+            print("SQL Generated:", data_2['sql'])
         else:
-            print("⚠️ No SQL in final response (might be expected for this test query)")
+            print("No SQL in final response (might be expected for this test query)")
             
     else:
-        print("❌ Did not pause! HIL failed.")
+        print("Did not pause! HIL failed.")
         print(json.dumps(data, indent=2))
 
 except Exception as e:
