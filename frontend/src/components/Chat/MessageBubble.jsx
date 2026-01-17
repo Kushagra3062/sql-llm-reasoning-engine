@@ -5,6 +5,9 @@ import { SQLViewer } from '../Visualizations/SQLViewer';
 import { ResultTable } from '../Visualizations/ResultTable';
 import './MessageBubble.css';
 
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 export function MessageBubble({ message }) {
     const isUser = message.role === 'user';
     const { content, reasoning, sql, data } = message;
@@ -24,8 +27,14 @@ export function MessageBubble({ message }) {
                     <div className="ai-content">
                         {reasoning && <ReasoningAccordion steps={reasoning} />}
                         {sql && <SQLViewer sql={sql} />}
-                        {/* The main text content often summarizes the data */}
-                        {content && <div className="user-text">{content}</div>}
+                        {/* Render Markdown Content */}
+                        {content && (
+                            <div className="user-text markdown-body">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {content}
+                                </ReactMarkdown>
+                            </div>
+                        )}
                         {data && <ResultTable data={data} />}
                     </div>
                 )}

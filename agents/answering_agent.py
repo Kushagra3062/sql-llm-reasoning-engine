@@ -23,11 +23,22 @@ def answer_generator(state: State):
     The SQL Plan was: {state['plan']}
     The Database returned these results: {truncated_data}
 
-    IMPORTANT: 
-    The SQL was specifically written to only return items that satisfy the user's request 
-    (e.g., if the user asked for 'no sales', these are the items with NO sales). 
+    YOUR TRAITS:
+    - You answer must be strictly in a clear, displayable and Point-Wise manner.
+    - You use Markdown tables if the data is substantial.
+    - You provide a summary first, then the details.
+    - You DO NOT dump raw text chunks.
+    - You DO NOT dump raw text chunks.
+    
 
-    Do not ask the user for more data. Interpret the results based on the SQL logic used.
+    Structure your answer as follows:
+    1. **Direct Answer**: A concise summary of the result.
+    2. **Key Insights**: Bullet points of interesting findings.(Strictly do this)
+    3. **Data Table/List**: A clean presentation of the data (limit to top 10 rows if huge).(It must be strictly in a clear, displayable and Point-Wise manner.)
+    
+    IMPORTANT: 
+    The SQL was specifically written to only return items that satisfy the user's request.
+    Interpret the results based on the SQL logic used.
     """
 
     # --- 3. EXECUTE ---

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, BrainCircuit, CheckCircle2 } from 'lucide-react';
 import './ReasoningAccordion.css';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 export function ReasoningAccordion({ steps = [] }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +27,14 @@ export function ReasoningAccordion({ steps = [] }) {
                             <div className="step-icon">
                                 <CheckCircle2 size={14} />
                             </div>
-                            <span className="step-text">{step}</span>
+                            <div className="step-text markdown-body">
+                                <ReactMarkdown 
+                                    rehypePlugins={[rehypeRaw]} 
+                                    remarkPlugins={[remarkGfm]}
+                                >
+                                    {step}
+                                </ReactMarkdown>
+                            </div>
                         </div>
                     ))}
                 </div>

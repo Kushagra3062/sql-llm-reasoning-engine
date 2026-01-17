@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Annotated, TypedDict, Tuple, Any
+from typing import List, Dict, Optional, Annotated, TypedDict, Tuple, Any, Union
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -15,7 +15,7 @@ class RefinerOutput(BaseModel):
     tables: List[str]
     intent_summary: str
     mcq_options: List[str] = Field(default_factory=list)
-    assumptions: List[str] = Field(default_factory=list)
+    assumptions: List[str] = Field(default_factory=list, description="List of assumptions made")
     temporal_snippet: str = ""
 
 
@@ -51,7 +51,7 @@ class State(TypedDict, total=False):
 
     # LLM side
     llm_output: RefinerOutput
-    human_choice: int
+    human_choice: Union[int, str]
     
     data: List[Any]
     final_response: str

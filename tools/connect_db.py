@@ -6,10 +6,10 @@ import urllib
 def connect_db():
     
     user = "postgres"
-    password = urllib.parse.quote_plus("Codeis@04") 
+    password = urllib.parse.quote_plus("admin") 
     host = "localhost"
     port = "5432"
-    dbname = "chinook_serial"
+    dbname = "chinook"
 
     pg_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
     db = SQLDatabase.from_uri(pg_uri)

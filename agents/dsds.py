@@ -1,4 +1,5 @@
 import json
+import ast
 from typing import Dict, Literal
 
 from schema import State, AgentDecision, RefinerOutput
@@ -124,37 +125,36 @@ def handle_human_mcqs(state: State):
     }
 
 def create_smart_refiner(State_Schema):
+    # This is kept for compatibility but main.py defines the graph
     graph = StateGraph(State_Schema)
     graph.add_node("detect", detect_critical_ambiguity)
     graph.add_node("human_resolve", handle_human_mcqs)
+    return graph
 
-    def route_decision(state: State):
-        decision = state["llm_output"].decision
-        if decision == AgentDecision.MCQ_NEEDED:
-            return "human_resolve"
-        
-        # If ASSUME_SAFE, we must sync the output to the state keys here
+def route_ambiguity_decision(state: State):
+    if not state.get("llm_output"):
         return "sync_and_end"
+    
+    decision = state["llm_output"].decision
+    if decision == AgentDecision.MCQ_NEEDED:
+        return "human_resolve"
+    
+    # If ASSUME_SAFE, we must sync the output to the state keys here
+    return "sync_and_end"
 
-    # Fix: Explicit Sync Node to bridge subgraph to parent
-    def sync_to_parent(state: State):
-        print("[REFINER] Syncing intent to main graph...")
-        out = state["llm_output"]
-        return {
-            "tables": out.tables,
-            "intent_summary": out.intent_summary,
-            "assumptions": out.assumptions,
-            "temporal_snippet": "last 90 days" if "recent" in state["user_query"].lower() else "",
-            "ready": True
-        }
-
-    graph.add_node("sync_and_end", sync_to_parent)
-    graph.add_edge(START, "detect")
-    graph.add_conditional_edges("detect", route_decision, {
-        "human_resolve": "human_resolve",
-        "sync_and_end": "sync_and_end"
-    })
-    graph.add_edge("human_resolve", "sync_and_end")
-    graph.add_edge("sync_and_end", END)
-
-    return graph.compile(checkpointer=MemorySaver())
+# Fix: Explicit Sync Node to bridge subgraph to parent
+def auto_resolve_safe_ambiguity(state: State):
+    print("[REFINER] Syncing intent to main graph...")
+    # Logic: if we are here, decision was ASSUME_SAFE
+    # Check if llm_output exists
+    if not state.get("llm_output"):
+         return {"ready": True, "intent_summary": state.get("user_query")} # Fallback
+         
+    out = state["llm_output"]
+    return {
+        "tables": out.tables,
+        "intent_summary": out.intent_summary,
+        "assumptions": out.assumptions,
+        "temporal_snippet": "last 90 days" if "recent" in state["user_query"].lower() else "",
+        "ready": True
+    }

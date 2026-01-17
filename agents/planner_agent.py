@@ -154,11 +154,16 @@ llm = ChatGroq(
 ###########################################
 # STATE STRUCTURE
 ###########################################
+###########################################
+# STATE STRUCTURE
+###########################################
 class PlannerState(dict):
     question: str
     schema: dict
     relevant_tables: list
     plan: dict
+    error: str = ""
+    retry_count: int = 0
 
 ###########################################
 # STEP 1 — Load Static Schema
@@ -188,8 +193,13 @@ def call_planner(state: PlannerState):
     tables = state["relevant_tables"]
     columns = {t: state["schema"]["columns"][t] for t in tables}
     fks = state["schema"]["foreign_keys"]
+    
+    # Construct the instruction
+    error_context = ""
+    if state.get("error"):
+        error_context = f"\n❌ PREVIOUS ATTEMPT REJECTED: {state['error']}\nFix the JSON plan based on this error."
 
-    formatted_prompt = PLANNER_PROMPT = f"""
+    formatted_prompt = f"""
     ### TASK
     You are a Lead Database Architect. Your goal is to map complex natural language questions into a structured logical plan.
     ### CONTEXT
@@ -198,6 +208,7 @@ def call_planner(state: PlannerState):
     Schema tables allowed: {tables}
     Columns: {columns}
     Foreign keys: {fks}
+    {error_context}
 
     ### OPERATIONAL GUIDELINES for COMPLEX TASKS:
     1. FK-CHAIN VERIFICATION: For multi-table joins, list the intermediate "bridge" tables even if no columns are selected from them.
@@ -210,6 +221,10 @@ def call_planner(state: PlannerState):
     - Step 2: Trace the FK path from the target metric table back to the entity table.
     - Step 3: Check for logical filters (Dates, status codes, specific names).
     - Step 4: Validate that every column used is inside the 'tables' list.
+    
+    ### CRITICAL RULE:
+    - If you include 'aggregations', you MUST include 'group_by' unless the aggregation is a global count (e.g. COUNT(*)).
+    - The 'group_by' list must include ALL non-aggregated columns selected or implied.
 
     ### OUTPUT FORMAT (JSON ONLY):
     {{
@@ -231,19 +246,40 @@ def call_planner(state: PlannerState):
     text = response.content
 
     try:
+        # Simple/Naive JSON extraction if LLM adds wrappers
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0]
         state["plan"] = json.loads(text)
-    except Exception:
-        raise ValueError(f"Planner LLM produced invalid JSON: {text}")
-
+        state["error"] = "" # Clear error if parsing succeeds (validation comes next)
+    except Exception as e:
+        state["error"] = f"JSON Parsing Failed: {str(e)}"
+        # We don't raise here, we let the validation/retry loop handle it if we want, or just retry immediately
+        # But for now let's just let it fall through to validation failure or retry logic
+    
     return state
 
 ###########################################
 # STEP 4 — Validate + sanitize
 ###########################################
 def validate_and_fix(state: PlannerState):
-    validate_plan(state["plan"], state["schema"])
-    state["plan"] = enforce_defaults(state["plan"])
+    if state.get("error"):
+         # If JSON parsing failed, just return to trigger retry
+         state["retry_count"] = state.get("retry_count", 0) + 1
+         return state
+
+    try:
+        validate_plan(state["plan"], state["schema"])
+        state["plan"] = enforce_defaults(state["plan"])
+    except ValueError as e:
+        state["error"] = str(e)
+        state["retry_count"] = state.get("retry_count", 0) + 1
+    
     return state
+
+def should_retry(state: PlannerState):
+    if state.get("error") and state.get("retry_count", 0) < 3:
+        return "call_planner"
+    return END
 
 ###########################################
 # BUILD LANGGRAPH
@@ -259,6 +295,9 @@ workflow.set_entry_point("load_schema")
 workflow.add_edge("load_schema", "pick_tables")
 workflow.add_edge("pick_tables", "call_planner")
 workflow.add_edge("call_planner", "validate")
-workflow.add_edge("validate", END)
+workflow.add_conditional_edges("validate", should_retry, {
+    "call_planner": "call_planner",
+    END: END
+})
 
 planner_graph = workflow.compile()

@@ -5,7 +5,7 @@ import { ChatInput } from './components/Chat/ChatInput';
 import { MessageBubble } from './components/Chat/MessageBubble';
 import { ThinkingIndicator } from './components/Chat/ThinkingIndicator';
 import { Database } from 'lucide-react';
-import { processQuery } from './analysis/mockService';
+import { runQuery } from './api';
 import './index.css';
 
 function App() {
@@ -16,6 +16,7 @@ function App() {
     }
   ]);
   const [isTyping, setIsTyping] = useState(false);
+  const [pendingQuery, setPendingQuery] = useState(null); // Store the query that triggered ambiguity
 
   const handleSend = (text) => {
     // Add User Message
@@ -23,11 +24,40 @@ function App() {
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
 
-    // Process Query
-    processQuery(text).then(response => {
+    if (pendingQuery) {
+        // User is answering an ambiguity
+        // Treat 'text' as the choice (integer or string)
+        console.log("Resuming query:", pendingQuery, "with choice:", text);
+        
+        let choice = text;
+        // Try to parse as int if generic
+        if (!isNaN(parseInt(text))) {
+            choice = parseInt(text);
+        }
+
+        runQuery(pendingQuery, choice).then(handleResponse);
+        setPendingQuery(null); // Clear pending state
+    } else {
+        // Normal query
+        runQuery(text).then(handleResponse);
+    }
+  };
+
+  const handleResponse = (response) => {
+      // Logic to handle interruption
+      if (response.type === 'interruption') {
+           if (response.mcq_options && response.mcq_options.length > 0) {
+               response.content += "\n\nOptions:\n" + response.mcq_options.map((opt, i) => `${i+1}. ${opt}`).join("\n");
+           }
+           // We need to remember this query was interrupted!
+           // The backend API for resume expects {"query": "original", "human_choice": ...}
+           // api.js constructs payload with query.
+           // So we can just pass "RESPONSED_TO_AMBIGUITY" or empty string as query, 
+           // dependent on what api.js sends.
+           setPendingQuery("RESUMING_AMBIGUITY"); 
+      }
       setMessages(prev => [...prev, response]);
       setIsTyping(false);
-    });
   };
 
   return (
