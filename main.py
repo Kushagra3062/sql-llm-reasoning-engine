@@ -8,7 +8,13 @@ from agents.sql_generator_agent import sql_generator
 from agents.safty_agent import safety_check
 from agents.execute import execute_query
 from agents.answering_agent import answer_generator
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANG_SMITH")
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_PROJECT"] = "SQL_Ambiguity_Detector"
 # Placeholder for your SQL Generator Agent
 def sql_generator_node(state: State):
     print("\n[MAIN] Node: SQL Generation")
