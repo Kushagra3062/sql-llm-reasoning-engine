@@ -4,6 +4,7 @@ A robust, agentic SQL query generator capable of handling complex reasoning, amb
 
 ## 🚀 Key Features
 
+
 ### 🧠 Advanced Reasoning
 - **Multi-Step Planner**: Decomposes complex questions (e.g., "Find customers who bought Rock but not Jazz") into logical steps before generating SQL.
 - **Self-Correction**: The Planner Agent validates its own plans against the schema. If it makes a mistake (e.g., missing `GROUP BY`), it catches the error and retries automatically.
