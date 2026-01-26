@@ -28,3 +28,6 @@ dist-ssr
 .venv/
 __pycache__/
 frontend/node_modules
+
+# Firebase Secrets
+sql-llm-agent-264cf-firebase-adminsdk-fbsvc-5305d0da22.json

@@ -9,11 +9,13 @@ import { LeadershipPage } from './components/LandingPage/LeadershipPage';
 import { ConnectDbModal } from './components/LandingPage/ConnectDbModal';
 import { Database } from 'lucide-react';
 import { runQuery } from './api';
+import { auth } from './firebase'; // Import firebase auth
 import './index.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showDbConfig, setShowDbConfig] = useState(false);
+  const [dbUrl, setDbUrl] = useState(''); // Store DB URL
   const [publicPage, setPublicPage] = useState('landing'); // 'landing' | 'leadership'
   const [messages, setMessages] = useState([
     {
@@ -28,9 +30,9 @@ function App() {
     setShowDbConfig(true);
   };
 
-  const handleDbConnect = (dbUrl) => {
-    console.log("Connected to DB:", dbUrl);
-    // Here you would typically save the DB URL or configure the backend
+  const handleDbConnect = (url) => {
+    console.log("Connected to DB:", url);
+    setDbUrl(url); // Save DB URL
     setShowDbConfig(false);
     setIsAuthenticated(true);
   };
@@ -45,23 +47,29 @@ function App() {
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
 
-    if (pendingQuery) {
-      // User is answering an ambiguity
-      // Treat 'text' as the choice (integer or string)
-      console.log("Resuming query:", pendingQuery, "with choice:", text);
-
-      let choice = text;
-      // Try to parse as int if generic
-      if (!isNaN(parseInt(text))) {
-        choice = parseInt(text);
-      }
-
-      runQuery(pendingQuery, choice).then(handleResponse);
-      setPendingQuery(null); // Clear pending state
-    } else {
-      // Normal query
-      runQuery(text).then(handleResponse);
-    }
+    // Get token
+    const user = auth.currentUser;
+    const tokenPromise = user ? user.getIdToken() : Promise.resolve(null);
+    
+    tokenPromise.then(token => {
+        if (pendingQuery) {
+          // User is answering an ambiguity
+          // Treat 'text' as the choice (integer or string)
+          console.log("Resuming query:", pendingQuery, "with choice:", text);
+    
+          let choice = text;
+          // Try to parse as int if generic
+          if (!isNaN(parseInt(text))) {
+            choice = parseInt(text);
+          }
+    
+          runQuery(pendingQuery, choice, token, dbUrl).then(handleResponse);
+          setPendingQuery(null); // Clear pending state
+        } else {
+          // Normal query
+          runQuery(text, null, token, dbUrl).then(handleResponse);
+        }
+    });
   };
 
   const handleResponse = (response) => {

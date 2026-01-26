@@ -1,11 +1,11 @@
-
 from langchain_community.utilities import SQLDatabase
 from langchain.tools import tool
-from .connect_db import connect_db
-db = connect_db()
+from .connect_db import get_db
+
+# db = connect_db() # Removed global instance
 
 def get_tables():
-    return db.get_usable_table_names()
+    return get_db().get_usable_table_names()
 
 def get_columns(table_name:str):
     query = f"""
@@ -13,13 +13,13 @@ def get_columns(table_name:str):
     FROM information_schema.columns
     WHERE table_name = '{table_name}';
     """
-    return db.run(query)
+    return get_db().run(query)
 
 def get_full_schema():
     """
         Tool to extract Schema of the Data Base
     """
-    tables = db.get_usable_table_names()
+    tables = get_db().get_usable_table_names()
     schema = {}
     for table in tables:
         schema[table] = get_columns(table)
@@ -43,7 +43,7 @@ def get_foreign_keys():
           ON ccu.constraint_name = tc.constraint_name
     WHERE constraint_type = 'FOREIGN KEY';
     """
-    return db.run(query)
+    return get_db().run(query)
 
 def fetch_invoice_sample():
     query = """
@@ -53,7 +53,7 @@ def fetch_invoice_sample():
     LIMIT 5
     """
 
-    rows = db.run(query)
+    rows = get_db().run(query)
 
     if isinstance(rows, str):
         lines = rows.strip().split("\n")

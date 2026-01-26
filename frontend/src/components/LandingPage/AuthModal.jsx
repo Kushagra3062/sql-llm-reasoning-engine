@@ -1,22 +1,41 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../firebase';
 
 export const AuthModal = ({ isOpen, onClose, onLogin }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+        setError('');
+        
+        try {
+            if (isLogin) {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                console.log("Logged in:", userCredential.user);
+                onLogin();
+                onClose();
+            } else {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                console.log("Registered:", userCredential.user);
+                onLogin();
+                onClose();
+            }
+        } catch (err) {
+            console.error("Auth Error:", err);
+            setError(err.message.replace("Firebase: ", ""));
+        } finally {
             setLoading(false);
-            onLogin(); // complete the mock login
-            onClose();
-        }, 1000);
+        }
     };
 
     return createPortal(
@@ -47,7 +66,6 @@ export const AuthModal = ({ isOpen, onClose, onLogin }) => {
                                     className="form-input"
                                     placeholder="John Doe"
                                     style={{ paddingLeft: '40px', width: '100%' }}
-                                    required
                                 />
                             </div>
                         </div>
@@ -62,6 +80,8 @@ export const AuthModal = ({ isOpen, onClose, onLogin }) => {
                                 className="form-input"
                                 placeholder="name@company.com"
                                 style={{ paddingLeft: '40px', width: '100%' }}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 required
                             />
                         </div>
@@ -76,10 +96,14 @@ export const AuthModal = ({ isOpen, onClose, onLogin }) => {
                                 className="form-input"
                                 placeholder="••••••••"
                                 style={{ paddingLeft: '40px', width: '100%' }}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 required
                             />
                         </div>
                     </div>
+                    
+                    {error && <p style={{color: 'red', fontSize: '0.9em', marginBottom: '1rem'}}>{error}</p>}
 
                     <button type="submit" className="btn-primary submit-btn flex-center" disabled={loading}>
                         {loading ? 'Processing...' : (
@@ -93,7 +117,7 @@ export const AuthModal = ({ isOpen, onClose, onLogin }) => {
 
                 <div className="auth-switch">
                     {isLogin ? "Don't have an account?" : "Already have an account?"}
-                    <span className="switch-link" onClick={() => setIsLogin(!isLogin)}>
+                    <span className="switch-link" onClick={() => { setIsLogin(!isLogin); setError(''); }}>
                         {isLogin ? 'Sign up' : 'Log in'}
                     </span>
                 </div>

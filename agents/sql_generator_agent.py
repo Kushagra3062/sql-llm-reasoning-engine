@@ -17,16 +17,16 @@ def sql_generator(state:State):
     
     prompt = f"""
         You are an expert SQL generator.
-        Generate the sql query using following rules:
-            1. generate sql as per the steps
-            2. don't use tables or columns apart from the schema
-            3. always adhere to the intent
-            4. use the query as well to look into it
-            5. solve the error if any by analysing the error messages
-              
-        Use ONLY the tables and columns from the schema below.
-        Follow the plan EXACTLY.
-        Always use explicit column names.
+        Your task is to generate a valid SQL query based on the schema and plan provided.
+        
+        CRITICAL RULES:
+        1. You MUST generate a SQL query. Do NOT ask clarification questions.
+        2. Ambiguity has ALREADY been resolved in a previous step. Assume the plan is final.
+        3. If you are unsure, make a reasonable assumption based on the intent_summary and generate the SQL.
+        4. Use ONLY the tables and columns from the schema below.
+        5. Follow the plan EXACTLY.
+        6. Always use explicit column names (table.column).
+        7. Respond ONLY with the Output_query tool. Do not provide conversational text.
         
         Schema:
         {schema}
@@ -37,14 +37,13 @@ def sql_generator(state:State):
         Question:
         {user_ques}
         
-        intent_summary:
+        Intent Summary (Use this for context):
         {intent_summary}
         
-        error_messages:
+        Previous Errors (if any):
         {errors}
 
-        Generate a single safe SQL query.
-        Use Output_query tool to provide the output
+        Generate the SQL query now.
     """
     response = llm.with_structured_output(Output_query).invoke(prompt)
     

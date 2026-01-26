@@ -1,7 +1,7 @@
 // Simple state for session ID (reset on page reload is fine for now)
 let currentThreadId = null;
 
-export const runQuery = async (query, humanChoice = null) => {
+export const runQuery = async (query, humanChoice = null, token = null, dbUrl = null) => {
   try {
     const payload = { query };
     if (currentThreadId) {
@@ -9,6 +9,12 @@ export const runQuery = async (query, humanChoice = null) => {
     }
     if (humanChoice !== null) {
         payload.human_choice = humanChoice;
+    }
+    if (token) {
+        payload.token = token;
+    }
+    if (dbUrl) {
+        payload.db_url = dbUrl;
     }
 
     const response = await fetch('http://localhost:8000/query', {
