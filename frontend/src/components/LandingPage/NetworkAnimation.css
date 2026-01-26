@@ -1,0 +1,201 @@
+.network-anim-container {
+    width: 100%;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    perspective: 1000px;
+    overflow: hidden;
+}
+
+.orbit-system {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    transform-style: preserve-3d;
+    animation: system-float 6s ease-in-out infinite;
+}
+
+.center-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle at 30% 30%, var(--accent-primary), #4c1d95);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+    z-index: 10;
+}
+
+.core-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(139, 92, 246, 0.5);
+    animation: core-ripple 2s linear infinite;
+}
+
+.orbit-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform-style: preserve-3d;
+}
+
+.ring-1 {
+    width: 250px;
+    height: 250px;
+    transform: translate(-50%, -50%) rotateX(70deg);
+    animation: spin-ring 10s linear infinite;
+}
+
+.ring-2 {
+    width: 200px;
+    height: 200px;
+    transform: translate(-50%, -50%) rotateY(60deg) rotateX(10deg);
+    animation: spin-ring 15s linear infinite reverse;
+}
+
+.ring-3 {
+    width: 300px;
+    height: 300px;
+    transform: translate(-50%, -50%) rotateY(-45deg);
+    animation: spin-ring 20s linear infinite;
+}
+
+.electron {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #fff, 0 0 20px var(--accent-primary);
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: electron-glow 2s ease-in-out infinite;
+}
+
+.ring-1 .electron {
+    left: 50%;
+    top: 0;
+}
+
+.ring-2 .electron {
+    left: 0;
+    top: 50%;
+}
+
+.ring-3 .electron {
+    left: 100%;
+    top: 50%;
+}
+
+.data-particle {
+    position: absolute;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: float-particle 4s infinite ease-in-out;
+}
+
+@keyframes spin-ring {
+    0% {
+        transform: translate(-50%, -50%) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) rotate(360deg);
+    }
+}
+
+@keyframes core-ripple {
+    0% {
+        width: 100%;
+        height: 100%;
+        opacity: 0.8;
+    }
+
+    100% {
+        width: 250%;
+        height: 250%;
+        opacity: 0;
+    }
+}
+
+@keyframes system-float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes electron-glow {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.7;
+    }
+}
+
+.floating-tag {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tag-1 {
+    top: 20%;
+    right: 10%;
+    animation: float-tag 6s ease-in-out infinite;
+}
+
+.tag-2 {
+    bottom: 20%;
+    left: 10%;
+    animation: float-tag 7s ease-in-out infinite 1s;
+}
+
+.tag-3 {
+    top: 10%;
+    left: 30%;
+    animation: float-tag 8s ease-in-out infinite 2s;
+}
+
+@keyframes float-tag {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
+}

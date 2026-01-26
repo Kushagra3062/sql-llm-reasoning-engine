@@ -1,0 +1,44 @@
+import React, { useState } from 'react';
+import { ChevronDown, ChevronRight, BrainCircuit, CheckCircle2 } from 'lucide-react';
+import './ReasoningAccordion.css';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+
+export function ReasoningAccordion({ steps = [] }) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    if (!steps || steps.length === 0) return null;
+
+    return (
+        <div className="reasoning-accordion">
+            <div className="reasoning-header" onClick={() => setIsOpen(!isOpen)}>
+                <div className="reasoning-title">
+                    <BrainCircuit size={16} />
+                    <span>Reasoning Process</span>
+                </div>
+                {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </div>
+
+            {isOpen && (
+                <div className="reasoning-content">
+                    {steps.map((step, idx) => (
+                        <div key={idx} className="reasoning-step">
+                            <div className="step-icon">
+                                <CheckCircle2 size={14} />
+                            </div>
+                            <div className="step-text markdown-body">
+                                <ReactMarkdown 
+                                    rehypePlugins={[rehypeRaw]} 
+                                    remarkPlugins={[remarkGfm]}
+                                >
+                                    {step}
+                                </ReactMarkdown>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
