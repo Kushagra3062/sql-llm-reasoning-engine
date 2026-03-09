@@ -347,7 +347,7 @@ async def run_query(request: QueryRequest):
             "reasoning": [
                 f"Intent: {state_to_use.get('intent_summary')}",
                 formatted_plan,
-                f"Assumptions: {state_to_use.get('assumptions', "No Assumptions")}",
+                f"Assumptions: {state_to_use.get('assumptions', 'No Assumptions')}",
                 f"Tables: {state_to_use.get('tables')}"
             ],
             "sql": state_to_use.get('sql_query'),
