@@ -17,7 +17,8 @@ export const runQuery = async (query, humanChoice = null, token = null, dbUrl = 
         payload.db_url = dbUrl;
     }
 
-    const response = await fetch('http://localhost:8000/query', {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    const response = await fetch(`${API_BASE_URL}/query`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

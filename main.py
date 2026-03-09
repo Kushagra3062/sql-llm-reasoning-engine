@@ -192,7 +192,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:5173")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -224,22 +224,21 @@ async def run_query(request: QueryRequest):
                  # I will allow it to proceed but log it, UNLESS db_url is provided, which implies a user-specific session.
                  pass
 
-        # 2. Setup Dynamic DB Connection
-        if request.db_url:
-            try:
-                # Basic validation or just try connecting
-                print(f"Connecting to custom DB: {request.db_url}")
-                custom_db = SQLDatabase.from_uri(request.db_url)
-                set_db(custom_db)
-            except Exception as db_err:
-                 return {
-                    "role": "system",
-                     "content": f"Failed to connect to provided Database URL: {str(db_err)}",
-                     "reasoning": [],
-                     "sql": None,
-                     "data": None,
-                     "thread_id": request.thread_id
-                 }
+        # 2. Hardcoded DB Connection
+        try:
+            db_url = os.getenv("DATABASE_URL", "postgresql://postgres:admin@localhost:5432/market_db")
+            print(f"Connecting to database: {db_url}")
+            custom_db = SQLDatabase.from_uri(db_url)
+            set_db(custom_db)
+        except Exception as db_err:
+             return {
+                "role": "system",
+                 "content": f"Failed to connect to Database: {str(db_err)}",
+                 "reasoning": [],
+                 "sql": None,
+                 "data": None,
+                 "thread_id": request.thread_id
+             }
         
         import uuid
         thread_id = request.thread_id

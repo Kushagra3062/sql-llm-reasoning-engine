@@ -15,7 +15,7 @@ import './index.css';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showDbConfig, setShowDbConfig] = useState(false);
-  const [dbUrl, setDbUrl] = useState(''); // Store DB URL
+  const [dbUrl, setDbUrl] = useState('postgresql://postgres:admin@localhost:5432/market_db'); // Hardcoded DB URL
   const [publicPage, setPublicPage] = useState('landing'); // 'landing' | 'leadership'
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -41,7 +41,7 @@ function App() {
   }, [isAuthenticated, dbUrl, messages.length]);
 
   const handleLogin = () => {
-    setShowDbConfig(true);
+    setIsAuthenticated(true);
   };
 
   const handleDbConnect = (url) => {
