@@ -5,14 +5,10 @@ import './Sidebar.css';
 
 // Mock schema for visualization
 const SCHEMA = {
-    'Artist': ['ArtistId', 'Name'],
-    'Album': ['AlbumId', 'Title', 'ArtistId'],
-    'Track': ['TrackId', 'Name', 'AlbumId', 'MediaTypeId', 'GenreId', 'Composer', 'Milliseconds', 'Bytes', 'UnitPrice'],
-    'Playlist': ['PlaylistId', 'Name'],
-    'Genre': ['GenreId', 'Name'],
-    'Customer': ['CustomerId', 'FirstName', 'LastName', 'Company', 'Address', 'City', 'State', 'Country', 'PostalCode', 'Phone', 'Fax', 'Email', 'SupportRepId'],
-    'Invoice': ['InvoiceId', 'CustomerId', 'InvoiceDate', 'BillingAddress', 'BillingCity', 'BillingState', 'BillingCountry', 'BillingPostalCode', 'Total'],
-    'Employee': ['EmployeeId', 'LastName', 'FirstName', 'Title', 'ReportsTo', 'BirthDate', 'HireDate', 'Address', 'City', 'State', 'Country', 'PostalCode', 'Phone', 'Fax', 'Email']
+    'financial_statements': ['id', 'company_id', 'year', 'market_cap_billion', 'revenue', 'gross_profit', 'net_income', 'earning_per_share', 'ebitda', 'shareholder_equity', 'cashflow_operating', 'cashflow_investing', 'cashflow_financing', 'current_ratio', 'debt_equity_ratio', 'roe', 'roa', 'roi', 'net_profit_margin', 'free_cashflow_per_share', 'return_on_tangible_equity', 'number_of_employees', 'inflation_rate_us', 'version', 'scrape_timestamp', 'source'],
+    'metadata_versions': ['version_id', 'version', 'scrape_timestamp', 'source', 'notes', 'data_type'],
+    'companies': ['company_id', 'company_name', 'category', 'symbol'],
+    'market_prices': ['id', 'company_id', 'date', 'open', 'high', 'low', 'close', 'volume', 'version', 'scrape_timestamp', 'source', 'daily_pct_change', 'ma_7', 'ma_30', 'volume_spike']
 };
 
 export function Sidebar({ onQuerySelect }) {
@@ -23,10 +19,10 @@ export function Sidebar({ onQuerySelect }) {
     };
 
     const QUERIES = [
-        "How many customers are from Brazil?",
-        "Which 5 artists have the most tracks?",
-        "Which customers have never made a purchase?",
-        "Show me recent orders"
+        "What was Apple's net income in 2023?",
+        "Show me the revenue growth for Microsoft over the last 3 years.",
+        "Which companies have a debt-to-equity ratio less than 0.5?",
+        "Show me the closing prices for Nvidia in the last 30 days."
     ];
 
     return (
