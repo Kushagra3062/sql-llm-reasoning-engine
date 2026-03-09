@@ -43,9 +43,11 @@ try:
 except Exception as e:
     print(f"Error initializing Firebase Admin: {e}")
 
-os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANG_SMITH")
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_PROJECT"] = "SQL_Ambiguity_Detector"
+lang_smith = os.getenv("LANG_SMITH")
+if lang_smith:
+    os.environ["LANGCHAIN_API_KEY"] = lang_smith
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_PROJECT"] = "SQL_Ambiguity_Detector"
 
 def sql_generator_node(state: State):
     print("\n[MAIN] Node: SQL Generation")

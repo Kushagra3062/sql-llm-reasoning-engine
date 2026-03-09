@@ -3,7 +3,9 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 def get_llm():
-    os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if groq_api_key:
+        os.environ["GROQ_API_KEY"] = groq_api_key
     try:
         llm = ChatGroq(model="llama-3.3-70b-versatile")
     except:
@@ -12,7 +14,9 @@ def get_llm():
     return llm
 
 def get_llm_llama():
-    os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if groq_api_key:
+        os.environ["GROQ_API_KEY"] = groq_api_key
     try:
         llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1)
     except:
