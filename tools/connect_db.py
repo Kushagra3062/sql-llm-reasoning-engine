@@ -30,7 +30,7 @@ def create_default_connection() -> SQLDatabase:
     password = urllib.parse.quote_plus("admin") 
     host = "localhost"
     port = "5432"
-    dbname = "chinook"
+    dbname = "market_db"
 
     pg_uri = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
     return SQLDatabase.from_uri(pg_uri)

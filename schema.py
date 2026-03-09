@@ -23,6 +23,12 @@ class State(TypedDict, total=False):
     # User side
     user_query: str
 
+    # Memory Extension
+    session_id: str
+    chat_history: List[Any]
+    structured_context: dict
+    resolved_query: str
+
     # Schema side
     schema: Dict[str, List[Tuple[str, str]]]   # table -> [(col, type)]
     foreign_keys: List[Tuple[str, str, str, str]]  # optional but structured
@@ -57,3 +63,8 @@ class State(TypedDict, total=False):
     final_response: str
     
     retry_count: int
+
+    # Hybrid Extension side
+    route: str
+    market_data: Union[str, dict]
+    rag_context: str

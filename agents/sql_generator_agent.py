@@ -11,9 +11,9 @@ def sql_generator(state:State):
     
     plan = state["plan"]
     schema = state["schema"]
-    intent_summary = state["intent_summary"]
-    user_ques = state["user_query"]
-    errors = state['error']
+    intent_summary = state.get("intent_summary", "")
+    user_ques = state.get("resolved_query") or state.get("user_query", "")
+    errors = state.get('error', "")
     
     prompt = f"""
         You are an expert SQL generator.

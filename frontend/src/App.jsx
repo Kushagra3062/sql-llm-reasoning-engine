@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from './components/Layout/MainLayout';
 import { Sidebar } from './components/Layout/Sidebar';
 import { ChatInput } from './components/Chat/ChatInput';
@@ -17,14 +17,28 @@ function App() {
   const [showDbConfig, setShowDbConfig] = useState(false);
   const [dbUrl, setDbUrl] = useState(''); // Store DB URL
   const [publicPage, setPublicPage] = useState('landing'); // 'landing' | 'leadership'
-  const [messages, setMessages] = useState([
-    {
-      role: 'system',
-      content: 'Hello! I can help you query the Chinook database. Ask me anything about artists, albums, or sales.'
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [pendingQuery, setPendingQuery] = useState(null); // Store the query that triggered ambiguity
+
+  useEffect(() => {
+    if (isAuthenticated && messages.length === 0) {
+      const initSession = async () => {
+        setIsTyping(true);
+        try {
+          const user = auth.currentUser;
+          const token = user ? await user.getIdToken() : null;
+          const response = await runQuery("", null, token, dbUrl);
+          setMessages([response]);
+        } catch (error) {
+          console.error("Failed to init session:", error);
+        } finally {
+          setIsTyping(false);
+        }
+      };
+      initSession();
+    }
+  }, [isAuthenticated, dbUrl, messages.length]);
 
   const handleLogin = () => {
     setShowDbConfig(true);

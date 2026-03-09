@@ -11,7 +11,7 @@ def execute_query(state: State):
         if not query:
             return {"error": "No SQL query found to execute"}
 
-        data = db.run(query)
+        data = db.run(query, include_columns=True)
         
         return {
             "execution": True, 

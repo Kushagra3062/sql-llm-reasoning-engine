@@ -31,8 +31,10 @@ then you MUST choose 'generate_mcqs'.
 VAGUENESS RULES:
 1. ENTITY IDENTIFIERS: If the user says "this", "that", or such kind of words 
    without providing a specific Name, ID or clarifing it refering to it is VAGUE.
-2. RANKING TERMS: "Best", "Top", "Worst", "Most Popular" are VAGUE. 
-   You must ask if they mean by 'Revenue', 'Count', or 'Rating'.
+2. RANKING TERMS: "Best", "Top", "Worst", "Most Popular" are VAGUE 
+   ONLY if the metric is missing. 
+   If the user says "Top 5 by Revenue", it is NOT vague.
+   If the user says just "Top 5 companies", you MUST ask if they mean by 'Revenue', 'Profit', etc.
 3. TEMPORAL TERMS: "Recent", "Old", "Latest" are VAGUE. 
    You must ask for a specific timeframe (e.g., 30 days vs 1 year).
 4. AGGREGATIONS: "Total sales" is VAGUE if it's unclear whether it's 
@@ -90,8 +92,9 @@ def detect_critical_ambiguity(state: State):
     print("\n[REFINER] Node: Detect Ambiguity")
     schema_summary = compress_schema(state["schema"])
     
+    query_to_use = state.get("resolved_query") or state.get("user_query", "")
     result = detect_chain.invoke({
-        "query": state["user_query"],
+        "query": query_to_use,
         "schema": json.dumps(schema_summary, indent=2),
         "format_instructions": parser.get_format_instructions()
     })
@@ -107,8 +110,9 @@ def handle_human_mcqs(state: State):
     if not state.get("human_choice"): return state
 
     schema_summary = compress_schema(state["schema"])
+    query_to_use = state.get("resolved_query") or state.get("user_query", "")
     result = mcq_chain.invoke({
-        "query": state["user_query"],
+        "query": query_to_use,
         "human_choice": state["human_choice"],
         "schema": json.dumps(schema_summary, indent=2),
         "format_instructions": parser.get_format_instructions()
@@ -143,14 +147,15 @@ def route_ambiguity_decision(state: State):
 def auto_resolve_safe_ambiguity(state: State):
     print("[REFINER] Syncing intent to main graph...")
     
+    query_to_use = state.get("resolved_query") or state.get("user_query", "")
     if not state.get("llm_output"):
-         return {"ready": True, "intent_summary": state.get("user_query")} 
+         return {"ready": True, "intent_summary": query_to_use} 
          
     out = state["llm_output"]
     return {
         "tables": out.tables,
         "intent_summary": out.intent_summary,
         "assumptions": out.assumptions,
-        "temporal_snippet": "last 90 days" if "recent" in state["user_query"].lower() else "",
+        "temporal_snippet": "last 90 days" if "recent" in query_to_use.lower() else "",
         "ready": True
     }

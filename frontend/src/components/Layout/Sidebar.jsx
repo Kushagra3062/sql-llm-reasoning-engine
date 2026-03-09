@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Database, Clock, ChevronRight, ChevronDown, LayoutList, Columns } from 'lucide-react';
+import { Database, Clock, ChevronRight, ChevronDown, LayoutList, Columns, LogOut } from 'lucide-react';
+import { auth } from '../../firebase';
 import './Sidebar.css';
 
 // Mock schema for visualization
@@ -87,6 +88,19 @@ export function Sidebar({ onQuerySelect }) {
                             )}
                         </div>
                     ))}
+                </div>
+            </div>
+            
+            <div className="sidebar-section" style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: 'auto' }}>
+                <div 
+                    className="nav-item" 
+                    style={{ color: 'var(--error, #ef4444)' }} 
+                    onClick={() => {
+                        auth.signOut().then(() => window.location.reload());
+                    }}
+                >
+                    <LogOut size={16} />
+                    <span>Logout / Reset Session</span>
                 </div>
             </div>
         </div>

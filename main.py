@@ -15,6 +15,10 @@ import firebase_admin
 from firebase_admin import credentials, auth
 from tools.connect_db import set_db, get_db
 from langchain_community.utilities import SQLDatabase
+from agents.memory_agent import session_initializer_node, welcome_node, context_resolver_node, memory_updater_node
+from agents.query_router import query_router_node
+from agents.market_data_agent import market_data_agent
+from agents.rag_agent import rag_agent
 
 # Initialize Firebase Admin
 try:
@@ -50,7 +54,7 @@ def call_planner_subgraph(state: State):
     
     retries = state.get("retry_count",0)
    
-    question = state.get("intent_summary") or state["user_query"]
+    question = state.get("intent_summary") or state.get("resolved_query", state.get("user_query", ""))
     if retries > 0:
         question += f" (IMPORTANT: Your previous plan returned 0 rows. Please check table joins and filter case-sensitivity.)"
     planner_input = {
@@ -91,8 +95,49 @@ graph_b.add_node("safety", safety_check)
 graph_b.add_node("execute", execute_query)
 graph_b.add_node("answer", answer_generator)
 
+graph_b.add_node("session_initializer", session_initializer_node)
+graph_b.add_node("welcome", welcome_node)
+graph_b.add_node("context_resolver", context_resolver_node)
+graph_b.add_node("memory_updater", memory_updater_node)
+graph_b.add_node("query_router", query_router_node)
+graph_b.add_node("market_data", market_data_agent)
+graph_b.add_node("rag", rag_agent)
 
-graph_b.add_edge(START, "explore")
+def route_start(state: State):
+    print(">>> [ROUTE_START] Evaluating entry node...")
+    chat_history = state.get("chat_history")
+    if chat_history is None:
+        print(">>> [ROUTE_START] Returning session_initializer")
+        return "session_initializer"
+    print(">>> [ROUTE_START] Returning context_resolver")
+    return "context_resolver"
+
+graph_b.add_conditional_edges(START, route_start, {
+    "session_initializer": "session_initializer", 
+    "context_resolver": "context_resolver"
+})
+
+graph_b.add_edge("session_initializer", "welcome")
+graph_b.add_edge("welcome", END)
+graph_b.add_edge("context_resolver", "query_router")
+
+def route_from_query_router(state: State):
+    return state.get("route", "SQL_QUERY")
+
+graph_b.add_conditional_edges(
+    "query_router", 
+    route_from_query_router, 
+    {
+        "SQL_QUERY": "explore",
+        "MARKET_DATA": "market_data",
+        "NEWS": "rag",
+        "GENERAL_INFO": "rag"
+    }
+)
+
+graph_b.add_edge("market_data", "answer")
+graph_b.add_edge("rag", "answer")
+
 graph_b.add_edge("explore", "detect")
 
 graph_b.add_conditional_edges(
@@ -131,7 +176,8 @@ def route_after_execution(state: State):
 
 graph_b.add_conditional_edges("safety", route_after_safety, {"generate_sql": "generate_sql", "execute": "execute"})
 graph_b.add_conditional_edges("execute", route_after_execution, {"generate_sql": "generate_sql", "planner": "planner", "answer": "answer"})
-graph_b.add_edge("answer", END)
+graph_b.add_edge("answer", "memory_updater")
+graph_b.add_edge("memory_updater", END)
 
 graph = graph_b.compile(checkpointer=MemorySaver(), interrupt_before=["human_resolve"])
 
@@ -258,6 +304,10 @@ async def run_query(request: QueryRequest):
         formatted_data = {"columns": [], "rows": []}
         if raw_data and isinstance(raw_data, list) and len(raw_data) > 0:
              formatted_data["rows"] = raw_data
+             if isinstance(raw_data[0], dict):
+                 formatted_data["columns"] = list(raw_data[0].keys())
+             elif hasattr(raw_data[0], "keys"):
+                 formatted_data["columns"] = list(raw_data[0].keys())
 
         
         plan_raw = state_to_use.get('plan')

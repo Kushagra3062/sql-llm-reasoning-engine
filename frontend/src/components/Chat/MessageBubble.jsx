@@ -3,6 +3,7 @@ import { User, Sparkles } from 'lucide-react';
 import { ReasoningAccordion } from '../Visualizations/ReasoningAccordion';
 import { SQLViewer } from '../Visualizations/SQLViewer';
 import { ResultTable } from '../Visualizations/ResultTable';
+import { DynamicChart } from '../Visualizations/DynamicChart';
 import './MessageBubble.css';
 
 import ReactMarkdown from 'react-markdown';
@@ -29,13 +30,18 @@ export function MessageBubble({ message }) {
                         {sql && <SQLViewer sql={sql} />}
                         {/* Render Markdown Content */}
                         {content && (
-                            <div className="user-text markdown-body">
+                            <div className="ai-markdown-container markdown-body">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {content}
                                 </ReactMarkdown>
                             </div>
                         )}
-                        {data && <ResultTable data={data} />}
+                        {data && (
+                            <div className="message-data-results">
+                                <DynamicChart data={data} content={content} />
+                                <ResultTable data={data} />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
