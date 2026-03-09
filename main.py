@@ -23,21 +23,25 @@ from agents.rag_agent import rag_agent
 # Initialize Firebase Admin
 try:
     if not firebase_admin._apps:
-        cred = credentials.Certificate("sql-llm-agent-264cf-firebase-adminsdk-fbsvc-5305d0da22.json") # Ensure this file exists or use environment vars
-        # For now, if the user hasn't provided the JSON, we might need a workaround or assume it's set via env
-        # However, typically for backend verification, we need the service account.
-        # Given the user instruction "I have added all the firebase configuration keys required in the env file",
-        # they might mean CLIENT keys.
-        # But for ADMIN SDK, we strictly need Service Account credentials.
-        # If the user only provided keys in .env, we can try to initialize using those if possible, 
-        # but usually Admin SDK needs a cert.
-        # Let's assume user has a service account json or we skip strict verification if not present,
-        # BUT the plan said "Implement Backend Firebase Admin".
-        # I'll initializing it with a default or environment variable if JSON is missing to avoid crashing app immediately.
-        # Wait, I should better ask user for service account path or use Application Default Credentials.
-        firebase_admin.initialize_app(cred)
+        firebase_json = os.getenv("FIREBASE_JSON")
+        if firebase_json:
+            # Use JSON string from environment variable
+            import json
+            cred_dict = json.loads(firebase_json)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+            print("Firebase Admin initialized via environment variable.")
+        else:
+            # Fallback to local file
+            cred_file = "sql-llm-agent-264cf-firebase-adminsdk-fbsvc-5305d0da22.json"
+            if os.path.exists(cred_file):
+                cred = credentials.Certificate(cred_file)
+                firebase_admin.initialize_app(cred)
+                print("Firebase Admin initialized via local file.")
+            else:
+                print("Warning: Firebase configuration not found (File or Env). Auth might fail.")
 except Exception as e:
-    print(f"Warning: Firebase Admin not initialized: {e}")
+    print(f"Error initializing Firebase Admin: {e}")
 
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANG_SMITH")
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
