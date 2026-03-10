@@ -9,8 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from utilis.get_llm import get_llm
 
-llm = get_llm()
-
+# No top-level LLM initialization to avoid startup crashes
 parser = PydanticOutputParser(pydantic_object=RefinerOutput)
 
 DETECTION_PROMPT = ChatPromptTemplate.from_template("""
@@ -63,8 +62,7 @@ Map to tables and intent.
 {format_instructions}
 """)
 
-detect_chain = DETECTION_PROMPT | llm | parser
-mcq_chain = MCQ_PROMPT | llm | parser
+# Chains are now initialized within the nodes that use them
 
 
 def compress_schema(schema: Dict, max_cols_per_table: int = 6):
@@ -93,6 +91,9 @@ def detect_critical_ambiguity(state: State):
     schema_summary = compress_schema(state["schema"])
     
     query_to_use = state.get("resolved_query") or state.get("user_query", "")
+    llm = get_llm()
+    detect_chain = DETECTION_PROMPT | llm | parser
+    
     result = detect_chain.invoke({
         "query": query_to_use,
         "schema": json.dumps(schema_summary, indent=2),
@@ -111,6 +112,9 @@ def handle_human_mcqs(state: State):
 
     schema_summary = compress_schema(state["schema"])
     query_to_use = state.get("resolved_query") or state.get("user_query", "")
+    llm = get_llm()
+    mcq_chain = MCQ_PROMPT | llm | parser
+    
     result = mcq_chain.invoke({
         "query": query_to_use,
         "human_choice": state["human_choice"],

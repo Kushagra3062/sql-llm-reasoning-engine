@@ -121,22 +121,8 @@ def print_schema(schema):
 
 
 from langgraph.graph import StateGraph, END
-from dotenv import load_dotenv
-import os, json
-from langchain_groq import ChatGroq
-
-
-from agents.schema_static import schema_static
-
-load_dotenv()
-
-
-
-llm = ChatGroq(
-    model="openai/gpt-oss-120b",   
-    api_key=os.getenv("GROQ_API_KEY"),
-    temperature=0
-)
+from utilis.get_llm import get_llm
+# No top-level LLM initialization
 
 
 class PlannerState(dict):
@@ -166,6 +152,7 @@ def pick_tables(state: PlannerState):
 
 
 def call_planner(state: PlannerState):
+    llm = get_llm()
     tables = state["relevant_tables"]
     columns = {t: state["schema"]["columns"][t] for t in tables}
     fks = state["schema"]["foreign_keys"]
